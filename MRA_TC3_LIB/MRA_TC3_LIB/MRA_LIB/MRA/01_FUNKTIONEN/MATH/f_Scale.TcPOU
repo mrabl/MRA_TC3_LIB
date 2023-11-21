@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="f_Scale" Id="{040a6d2a-e3e9-49dd-b242-503b1f662247}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_Scale : REAL
+VAR_INPUT
+	input : REAL;
+	input_min		:REAL;
+	imput_max	:REAL;
+	output_min		:REAL;
+	output_max	:REAL;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (imput_max-input_min) <> 0 THEN
+	f_Scale:= (input - input_min)*(output_max-output_min)/(imput_max-input_min)+output_min;
+END_IF
+
+IF f_Scale < output_min THEN
+	f_Scale:=output_min;
+ELSIF f_Scale > output_max THEN
+	f_Scale := output_max;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="f_Scale">
+      <LineId Id="8" Count="7" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

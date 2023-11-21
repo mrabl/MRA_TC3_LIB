@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="KNX" Id="{8cfd9312-881b-4f31-9e6a-491c53670ddc}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM KNX
+VAR
+	KL6301: KL6301;
+	
+
+bActivate        : BOOL;
+idx              : INT := 1;
+EIB_PHYS_ADDR    : EIB_PHYS_ADDR;
+EIB_GROUP_FILTER : ARRAY [1..8] OF EIB_GROUP_FILTER;
+iMode            : INT;
+tTimeout         : TIME := T#10S;
+
+	
+bActive      : BOOL;
+bReady       : BOOL;
+bError       : BOOL;
+iErrorId     : EIB_Error_Code;
+	fbWait: TON;
+	bActivateTest: BOOL := TRUE;
+	fbRtrigReady: R_TRIG;
+	TEST1: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* ##################################################################################################################### *)
+(* Definition der physikalischen Adresse jeder Klemme *)
+	(* Adresse kann nur an eine Klemme vergeben werden *)
+
+	EIB_PHYS_ADDR.Area		:= 1;
+	EIB_PHYS_ADDR.Line		:= 7;
+	EIB_PHYS_ADDR.Device	:= 200;
+
+
+(* ##################################################################################################################### *)
+(* Bus - Filter für die Gruppenadressen [max. 8] *)
+
+	(* Filter 1	*)
+		EIB_GROUP_FILTER[1].GROUP_ADDR.MAIN 	:= 0;
+		EIB_GROUP_FILTER[1].GROUP_ADDR.SUB_MAIN	:= 6;
+		EIB_GROUP_FILTER[1].GROUP_ADDR.NUMBER	:= 0;
+		EIB_GROUP_FILTER[1].GROUP_LEN			:= 63;
+	(* Filter 2	*)
+		EIB_GROUP_FILTER[2].GROUP_ADDR.MAIN 	:= 0;
+		EIB_GROUP_FILTER[2].GROUP_ADDR.SUB_MAIN	:= 6;
+		EIB_GROUP_FILTER[2].GROUP_ADDR.NUMBER	:= 64;
+		EIB_GROUP_FILTER[2].GROUP_LEN			:= 63;
+	(* Filter 3	*)
+		EIB_GROUP_FILTER[3].GROUP_ADDR.MAIN 	:= 0;
+		EIB_GROUP_FILTER[3].GROUP_ADDR.SUB_MAIN	:= 6;
+		EIB_GROUP_FILTER[3].GROUP_ADDR.NUMBER	:= 128;
+		EIB_GROUP_FILTER[3].GROUP_LEN			:= 63;
+	(* Filter 4	*)
+		EIB_GROUP_FILTER[4].GROUP_ADDR.MAIN 	:= 0;
+		EIB_GROUP_FILTER[4].GROUP_ADDR.SUB_MAIN	:= 6;
+		EIB_GROUP_FILTER[4].GROUP_ADDR.NUMBER	:= 192;
+		EIB_GROUP_FILTER[4].GROUP_LEN			:= 63;
+
+fbWait(IN:= Allgemein.CX_Status = 0, PT:= T#100MS);
+
+KL6301(
+	bActivate:= fbWait.Q,
+	idx:= idx, 
+	EIB_PHYS_ADDR:= EIB_PHYS_ADDR, 
+	EIB_GROUP_FILTER:=EIB_GROUP_FILTER , 
+	iMode:=iMode , 
+	tTimeout:=tTimeout , 
+	bActive=> bActive, 
+	bReady=> bReady, 
+	bError=> bError, 
+	iErrorId=>iErrorId , 
+	str_Data_Rec=> str_Data_Rec, 
+	KL6301_IN:=KL6301_IN , 
+	KL6301_OUT:=KL6301_OUT );
+
+
+	
+	
+
+
+	
+
+
+	
+
+IF bReady THEN	
+	KNX_BOOL_SEND(GRUPPENADRESSE:='0.6.0' , KNX_STRUCTUR:= str_Data_Rec , REAL_OUT=>KNX_E01_Putzraum_Temperatur, INFO=> ERROR_INFO[1] ,	ERROR_OUT=>KNX_E01_Putzraum_Temperatur_SS01);
+
+ END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="KNX">
+      <LineId Id="178" Count="48" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="229" Count="3" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="233" Count="1" />
+      <LineId Id="314" Count="0" />
+      <LineId Id="259" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

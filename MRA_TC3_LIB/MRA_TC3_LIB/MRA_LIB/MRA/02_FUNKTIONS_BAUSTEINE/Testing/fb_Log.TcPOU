@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="fb_Log" Id="{b77eae46-0603-4fc5-8e7f-105df770d0bc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_Log
+VAR_INPUT
+		INPUT_STRING: STRING;
+		SYSTEM_TIME : STRING;
+		CLEAR_LOGG_ARRAY: BOOL;
+END_VAR
+VAR_IN_OUT
+		LOGG_ENTRY    : INT;
+		logging_array : ARRAY [1..1000] OF STRING(500);
+END_VAR
+VAR
+		INPUT_STRING_BUFFER: STRING;
+		clear_loggarray: ARRAY [1..1000] OF STRING(500);
+		BUFFER_STRING: STRING(500);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	IF INPUT_STRING <> INPUT_STRING_BUFFER THEN
+	 	INPUT_STRING_BUFFER :=	INPUT_STRING;
+		LOGG_ENTRY := LOGG_ENTRY + 1;
+		BUFFER_STRING := CONCAT('      TIME STAMP:  ', SYSTEM_TIME );
+		LOGGING_ARRAY[LOGG_ENTRY] := CONCAT(INPUT_STRING, BUFFER_STRING );		
+	END_IF
+
+	IF CLEAR_LOGG_ARRAY THEN
+		Tc2_System.MEMCPY(destAddr:=ADR(logging_array) , srcAddr:=ADR(clear_loggarray) , n:=SIZEOF(logging_array));
+		logg_entry := 0;
+	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="fb_Log">
+      <LineId Id="10" Count="2" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="15" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="fb_Drehzahl" Id="{d26542d3-bdc1-485d-bc40-0654aa42272b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_Drehzahl
+VAR_INPUT
+
+		TRIGGER : BOOL;	
+
+END_VAR
+VAR_OUTPUT
+	
+	UMDREHUNGEN_PRO_MINUTE : INT;
+	
+END_VAR
+VAR
+	
+		
+	R_TRIG: R_TRIG;
+	TON_COUNTER : TON;
+	DREHIMPULSE_1S : INT;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[R_TRIG(CLK:= TRIGGER);
+
+TON_COUNTER(IN:= NOT TON_COUNTER.Q, PT := T#5S);
+
+
+IF R_TRIG.Q THEN
+	
+
+	DREHIMPULSE_1S := DREHIMPULSE_1S + 1;
+
+END_IF
+
+IF TON_COUNTER.Q THEN
+	
+
+	UMDREHUNGEN_PRO_MINUTE := DREHIMPULSE_1S * 12;
+	DREHIMPULSE_1S := 0;
+
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="fb_Drehzahl">
+      <LineId Id="17" Count="17" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

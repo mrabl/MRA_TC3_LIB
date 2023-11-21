@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="KLEINSTER_WERT" Id="{d1c723a4-c896-445d-90a3-d427c0872c78}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION KLEINSTER_WERT : REAL
+VAR_INPUT
+	ARRAY_INPUT : ARRAY[1..100] OF REAL;	
+END_VAR
+
+VAR
+	FOR_HELPER_3: INT;
+	BUFFER_ARRAY_1 : ARRAY[1..100] OF REAL;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MEMCPY( destAddr :=  (ADR(BUFFER_ARRAY_1)), srcAddr := (ADR(ARRAY_INPUT)) , n := (SIZEOF(ARRAY_INPUT)));
+	
+_array_sort(ADR(BUFFER_ARRAY_1),SIZEOF(BUFFER_ARRAY_1));
+
+FOR FOR_HELPER_3 := 100 TO 1 BY -1 DO
+
+		IF BUFFER_ARRAY_1[FOR_HELPER_3] = 0 THEN
+		
+			KLEINSTER_WERT :=	BUFFER_ARRAY_1[FOR_HELPER_3 + 1];
+		
+			RETURN;
+			
+		END_IF
+
+END_FOR]]></ST>
+    </Implementation>
+    <LineIds Name="KLEINSTER_WERT">
+      <LineId Id="41" Count="9" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="51" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

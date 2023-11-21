@@ -1,0 +1,310 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="fb_Ventil_stetig" Id="{5d88f117-f8cb-4fd1-acb6-392174520865}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_Ventil_stetig
+(*Ventil-stetig*)																
+
+
+VAR_INPUT
+	DDC	:BOOL;	(* 	DDC Betrieb	*)
+	FRG	:BOOL;	(* 	Freigabe			*)
+	P_HA	:BOOL;	(* 	Panel H/A	*)
+	AUTO_STELL	:REAL;	(* 	Auto Stellbefehl*)
+	FROST	:BOOL;	(* 	Frostschutz					*)
+	RM_Y	:INT;	(*	Rückmeldung		*)
+	QUITT	:BOOL;	(* 	Störquittierung	*)
+	T_RM	:TIME;	(* 	Rückmeldefehler Zeit	*)
+	Y_OG	:REAL;	(*	Obergrenze	*)
+	Y_UG	:REAL;	(*	Untergrenze	*)
+	BLOCK	:BOOL;	(* 	Blockierschutz	*)
+	T_BLOCK	:TIME;	(* 	Aktivierungszeit Blockierschutz	*)
+	U_IO	:BOOL;	(* 	Spannungsüberwachung		*)
+	KONFIG	:BYTE;	(* 	Konfiguration	
+						2#01000000 Ansteuerung&Rückmeldung Gegenläufig
+						2#00100000 Ansteuerung&Rückmeldung 2-10V
+						2#00010000 Auswertung Teilautomatik
+						2#00001000 Auswertung Störung
+						2#00000100 Bei Rückmeldefehler Antrieb = Auto
+						2#00000010 Bei Rückmeldefehler Antrieb = Ein
+						2#00000001 Quittierung Rückmeldefehler*)
+END_VAR
+VAR_IN_OUT
+	V_SB	:BYTE;	(* 	VISU SB	*)
+	V_STELL	:REAL;	(* 	VISU Stellbefehl	*)
+END_VAR					
+
+VAR_OUTPUT					
+	NOTB	:BOOL;	(* 	LVB	*)
+	TA_P	:BOOL;	(* 	Teilautomatik Panel	*)
+	TA_V	:BOOL;	(* 	Teilautomatik VISU	*)
+	TA_G	:BOOL;	(* 	Teilautomatik GLT	*)
+	S_TA	:BOOL;	(* 	Teilautomatik	*)
+	Y	:REAL;	(*	Stellsignal	*)
+	Y_OUT	:INT;	(*	Stellsignal	*)
+	STOE_RM	:BOOL;	(* 	Störung Rückmeldung	*)
+	STOE_FROST	:BOOL;	(* 	Störung Frostschutz	*)
+	BLOCK_EIN	:BOOL;	(* 	Blockierschutz aktiv	*)
+	SA	:BOOL;	(* 	Störung	*)
+	RM_X	:REAL;	(*	Rückmeldung	*)
+	Sperre:BOOL;(* 	Sperre Ventil (Keine Freigabe)	*)
+END_VAR					
+
+
+VAR
+	P_STELL	:REAL;	(* 	Panel Stellbefehl	*)
+	RMF	:TON;														
+	QuittRMF	:BOOL;														
+	Maske	:BYTE;														
+	NOTBx	:BOOL;														
+	TA_Px	:BOOL;														
+	TA_Vx	:BOOL;														
+	TA_Gx	:BOOL;														
+	S_TAx	:BOOL;														
+	STOE_RMx	:BOOL;														
+	SAx	:BOOL;														
+	Yx	:REAL;														
+	m	:REAL;														
+	b	:REAL;														
+	Stoe_Frostx	:BOOL;														
+	BereichOG	:REAL;														
+	BereichUG	:REAL;														
+	TON_BLOCK	:TON;
+	TP_BLOCK	:TP;														
+	U_IO_Verz	:TON;														
+	U_IO_X	:BOOL;														
+
+
+	V_SB_UA_M	:BYTE;
+	V_ST_UA_M	:BYTE;
+	V_STELL_UA_M	:REAL;														
+	V_SB_M	:BYTE;														
+	V_ST_M	:BYTE;
+	V_STELL_M	:REAL;														
+END_VAR																
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*Auswertung UA / konventionell*)
+
+
+IF V_SB <> V_SB_M THEN
+    V_SB_UA_M := V_SB;
+    V_SB_M := V_SB;
+END_IF;
+
+
+
+IF V_STELL <> V_STELL_M THEN
+    V_STELL_UA_M := V_STELL;
+    V_STELL_M := V_STELL;
+END_IF;
+
+
+(*Auswertung VISU/GLT*)
+CASE BYTE_TO_INT (V_SB) OF
+	1:	TA_Vx	:= TRUE;
+		TA_Gx	:= FALSE;
+	2:	TA_Vx	:= FALSE;
+		TA_Gx	:= TRUE;
+	ELSE
+		TA_Vx	:= FALSE;
+		TA_Gx	:= FALSE;
+END_CASE;
+
+(*Initalisierung Stossfreie Umschaltung*)
+IF NOT (TA_Gx OR TA_Vx)  THEN
+	V_STELL := Y;
+END_IF;
+IF NOT TA_Px  THEN
+	P_STELL :=Y;
+END_IF;
+
+(*Auswertung Panel*)
+TA_Px := P_HA;
+
+(*Auswertung Notbetrieb*)
+Notbx := NOT DDC;
+
+(*Auswertung Teilautomatik*)
+Maske := Konfig AND 2#00010000;
+IF Maske = 16 THEN
+	S_TAx := TA_Vx OR TA_Gx OR TA_Px;
+	ELSE S_TAx := TA_Vx OR TA_Gx OR TA_Px OR Notbx;
+END_IF;
+
+(*Rückmeldung gegenläufig*)
+Maske := Konfig AND 2#01000000;
+IF Maske = 64 THEN
+	m :=-1;	(*Steigung*)
+	b := 32767;
+	RM_Y :=REAL_TO_INT( INT_TO_REAL (RM_Y) * m + b);
+END_IF;
+
+(*Rückmeldung 2-10V*)
+Maske := Konfig AND 2#00100000;
+IF Maske = 32 THEN
+	m :=1.25;	(*Steigung*)
+	b := -0.25 * 32767;
+	RM_Y :=REAL_TO_INT( INT_TO_REAL (RM_Y) * m + b);
+END_IF;
+
+(*Auswertung Rückmeldung*)
+m := ((Y_OG - Y_UG)/32767);					(*Steigung*)
+b  := Y_UG;										(*Nulldurchgang*)
+RM_X := ( INT_TO_REAL ( RM_Y ) * m + b);			(*Geradengleichung*)
+IF (RM_X < Y_UG) OR (RM_X <= 2)  THEN
+	RM_X := Y_UG;
+END_IF;
+IF (RM_X > Y_OG) OR (RM_X >= 98)  THEN
+	RM_X := Y_OG;
+END_IF;
+
+(*Auswertung Rückmeldefehler*)
+BereichOG :=  Yx + ((Y_OG - Y_UG) * 0.20);
+BereichUG :=  Yx -  ((Y_OG - Y_UG) * 0.20);
+RMF(IN:=(((BereichOG < RM_X OR BereichUG > RM_X) AND DDC) OR Stoe_Rmx) AND NOT QuittRMF, PT:=T_RM);
+Stoe_Rmx := RMF.Q;
+
+(*Auswertung Störung Frost*)
+Stoe_Frostx := (NOT Frost);
+
+(*Auswertung Störung*)
+Maske := Konfig AND 2#00001000;
+IF Maske = 8 THEN
+	SAx := Stoe_Rmx ;
+	ELSE	SAx := Stoe_Rmx;
+END_IF;
+
+(*Quittierung Rückmeldefehler*)
+QuittRMF := FALSE;
+Maske := Konfig AND 2#00000001;
+IF Maske = 1 THEN
+	IF ((BereichOG > RM_X AND BereichUG < RM_X)) AND Stoe_Rmx AND Quitt THEN
+		QuittRMF := TRUE;
+	END_IF;
+	ELSE IF Stoe_Rmx AND Quitt THEN
+		QuittRMF := TRUE;
+	END_IF;
+END_IF;
+
+(*Ansteuerung Antrieb*)
+IF FRG AND DDC THEN
+	m := ((Y_OG - Y_UG) / 100);	(*Steigung*)
+	b := Y_UG;					(*Nulldurchgang*)
+	Yx := m * Auto_Stell + b;		(*Geradengleichung*)
+	IF TA_Gx OR TA_Vx THEN
+		Maske := 2#00000001;
+		IF V_STELL > Y_OG THEN
+			V_STELL := Y_OG;
+		END_IF;
+		IF V_STELL < Y_UG THEN
+			V_STELL := Y_UG;
+		END_IF;
+		Yx := V_STELL;
+	END_IF;
+	IF TA_Px THEN
+		IF P_STELL > Y_OG THEN
+			P_STELL := Y_OG;
+		END_IF;
+		IF P_STELL < Y_UG THEN
+			P_STELL := Y_UG;
+		END_IF;
+		Yx := P_STELL;
+	END_IF;
+	IF Stoe_Rmx THEN	(*Bei Rückmeldefehler Antrieb = Ein || Antrieb = Aus || Antrieb = Auto*)
+		Maske := Konfig AND 2#00000110;
+		IF Maske = 4 THEN
+			Yx := Yx;
+			ELSE IF Maske = 2 THEN
+				Yx := Y_OG;
+				ELSE
+					Yx := Y_UG;
+			END_IF;
+		END_IF;
+	END_IF;
+
+	(*Blockierschutz*)
+	TON_BLOCK (IN:= BLOCK AND ( Y = Y_UG), PT:=T_BLOCK);
+	TP_BLOCK (IN:= TON_BLOCK.Q, PT:= T#5m);
+	IF TP_BLOCK.Q THEN
+		Yx := Y_OG;
+	END_IF;
+	BLOCK_EIN := TP_BLOCK.Q;
+ELSE
+	Yx := Y_UG;
+END_IF;
+
+IF Stoe_Frostx AND DDC THEN
+	Yx := Y_OG;
+END_IF;
+
+(*Skalierung Ansteuerung*)
+IF  (Y_OG - Y_UG) = 0 THEN
+    Y_OUT := 0;                                    (*DIV / NULL*)
+    ELSE
+        m := (32767 / (Y_OG - Y_UG));            (*Steigung*)
+        b := Y_UG * m * -1;                        (*Nulldurchgang*)
+        Y_OUT := REAL_TO_INT (m * Yx + b);    (*Geradengleichung*)
+
+	(*Ansteuerung gegenläufig*)
+	Maske := Konfig AND 2#01000000;
+	IF Maske = 64 THEN
+		m :=-1;	(*Steigung*)
+		b := 32767;
+		Y_OUT :=REAL_TO_INT( INT_TO_REAL (Y_OUT) * m + b);
+	END_IF;
+
+	(*Ansteuerung 2-10V*)
+	Maske := Konfig AND 2#00100000;
+	IF Maske = 32 THEN
+		m :=0.8;	(*Steigung*)
+		b := 0.2 * 32767;
+		Y_OUT :=REAL_TO_INT( INT_TO_REAL (Y_OUT) * m + b);
+	END_IF;
+END_IF;
+
+IF Yx > 97 THEN
+Y := 100;
+ELSE
+Y := Yx;
+END_IF
+
+IF Yx < 2 THEN
+Y := 0;
+ELSE
+Y := Yx;
+END_IF
+
+
+
+
+(*Meldeunterdrückung*)
+U_IO_Verz(IN:=U_IO, PT:=T#5s);
+U_IO_X := U_IO_Verz.Q;
+IF U_IO_X THEN
+	NOTB	:=	NOTBx	;
+	TA_P	:=	TA_Px	;
+	TA_V	:=	TA_Vx	;
+	TA_G	:=	TA_Gx	;
+	S_TA	:=	S_TAx	;
+	STOE_RM	:=	STOE_RMx	;
+ 	STOE_FROST	:=	Stoe_Frostx;
+	SA	:=	SAx	;
+END_IF;
+
+Sperre:=NOT FRG;
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="fb_Ventil_stetig">
+      <LineId Id="91" Count="0" />
+      <LineId Id="96" Count="4" />
+      <LineId Id="102" Count="1" />
+      <LineId Id="108" Count="4" />
+      <LineId Id="114" Count="16" />
+      <LineId Id="132" Count="179" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

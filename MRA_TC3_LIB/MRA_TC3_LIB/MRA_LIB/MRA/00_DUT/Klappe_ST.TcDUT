@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <DUT Name="Klappe_ST" Id="{09d1501c-a334-4789-9c10-7f2f84305822}">
+    <Declaration><![CDATA[TYPE Klappe_ST :
+STRUCT
+	BSZ 			:REAL;
+	Y_OG			:REAL;
+	Y_UG			:REAL;
+	V_STELL		:REAL;
+	RM_X			:REAL;
+	V_SB			:BYTE;		(*~	(SV_Import: true)				(SV_VariableDescription: Betriebsart HAND AUTO)			(SV_Alarm: False)		(SV_Log: True)	 (SV_Command: True)*)
+	V_ST			:BYTE;		(*~	(SV_Import: true)				(SV_VariableDescription:Betriebsart Auf Zu)				(SV_Alarm: False)		(SV_Log: True)	 (SV_Command: True)*)
+	Status 			:BYTE;		(*~	(SV_Import: true)				(SV_VariableDescription:Status)				(SV_Alarm: False)		(SV_Log: True)	 (SV_Command: False)*)
+	(*Bit 0 = Offen / Bit 1 = Störung /  Bit 2 = geschlossen  / Bit 3 = HAND / Bit 4 = Fahrbewegung / Bit 5 = Sperre / Bit 6 = LVB    / Bit 7 = Antrieb angesteuert *)
+	BLOCK_EIN		:BOOL;
+	NOTB			:BOOL;
+	TA_P			:BOOL;
+	TA_V			:BOOL;
+	TA_G			:BOOL;
+	RM				:BOOL;
+	RM_AUF			:BOOL;		(*~	(SV_Import: true)				(SV_VariableDescription:Rückmeldung offen)				(SV_Alarm: False)		(SV_Log: True)	 (SV_Command: false)*)
+	RM_ZU			:BOOL;		(*~	(SV_Import: true)				(SV_VariableDescription:Rückmeldung geschlossen)		(SV_Alarm: False)		(SV_Log: True)	 (SV_Command: false)*)
+	RM_ST1			:BOOL;
+	RM_ST2			:BOOL;
+	RM_ST3			:BOOL;
+	STOE_RM		:BOOL;		(*~	(SV_Import: true)				(SV_VariableDescription:Störung Rückmeldung)			(SV_Alarm: True)		(SV_Log: True)	 (SV_Command: false)*)
+	STOE_MS		:BOOL;		(*~	(SV_Import: true)				(SV_VariableDescription:Störung Motorschutz)				(SV_Alarm: True)		(SV_Log: True)	 (SV_Command: false)*)
+	STOE_FU		:BOOL;
+	STOE_LAUF		:BOOL;
+	WART			:BOOL;
+	STOE_STB		:BOOL;
+	STOE_STROEM:BOOL;
+	STOE_FEUCHTE:BOOL;
+	Reset_BSZ		:BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

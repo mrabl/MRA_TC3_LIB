@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_MODBUS_DEVICE" Id="{02c26d83-85a0-4c4c-8ecd-e282faa1d01f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MODBUS_DEVICE
+VAR_INPUT
+	fbMaster					: ITF_MODBUS_RTU;
+	bEnable						: BOOL;
+	// Modbus device address
+	nUnitAddr					: BYTE;
+END_VAR
+VAR_OUTPUT
+	bBusy						: BOOL;
+	bError						: BOOL;
+	eError						: Tc2_ModbusRTU.MODBUS_ERRORS;
+	rTemperature1: REAL;
+	rHumdity1: REAL;
+	rTemperature2: REAL;
+	rHumdity2: REAL;
+END_VAR
+VAR
+	fbRtrigUnitAddr				: R_TRIG;
+	nWriteOutputRegsM			: INT;
+	nReadReg					: ARRAY [0..3] OF WORD;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbRtrigUnitAddr(CLK:= bEnable AND nUnitAddr = fbMaster.nCurrentUnitAddr );
+IF bEnable THEN
+	IF fbRtrigUnitAddr.Q THEN
+		bBusy := TRUE;
+		// ###############################
+		// Insert here the Modbus Commands
+		// ###############################
+	
+		fbMaster.mAddRequest(nUnitAddr := nUnitAddr, nRegModbusAddr := 0, nFunction := E_MODBUS_FUNCTION.Read_Holding_Registers, pVar := ADR(nReadReg), nSizeOfVar := SIZEOF(nReadReg), pError := ADR(eError));
+		
+		// ###############################
+		// End of Modbus Commands
+		// ###############################
+	ELSE
+		IF fbMaster.nRequestNo = 0 THEN
+			bBusy :=FALSE;
+		END_IF
+	END_IF
+	bError := eError <> Tc2_ModbusRTU.MODBUS_ERRORS.MODBUSERROR_NO_ERROR;
+ELSE
+	bBusy := FALSE;
+	bError := FALSE;
+	eError := Tc2_ModbusRTU.MODBUS_ERRORS.MODBUSERROR_NO_ERROR;
+END_IF
+
+rTemperature1 := TO_REAL(nReadReg[0])/10.0;
+rHumdity1 :=  TO_REAL(nReadReg[1])/10.0;
+rTemperature2 := TO_REAL(nReadReg[2])/10.0;
+rHumdity2 :=  TO_REAL(nReadReg[3])/10.0;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MODBUS_DEVICE">
+      <LineId Id="3" Count="6" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="19" Count="13" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="74" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="fb_IBN_Pumpe" Id="{d785bd33-59e3-4285-ac5e-cf0e3ef7ab89}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_IBN_Pumpe
+VAR_INPUT
+	AUTO_EIN : BOOL; //Ansteuerung Auf
+	LOGGING_NAME : STRING; //Name des Ventil für den Log Eintrag
+	TIME_STAMP : STRING; //Zeitstempell für den Log Eintrag
+	MAX_LOGG_ENTRY : INT := 10000;
+END_VAR
+VAR_OUTPUT
+	RM : BOOL; //Rückmeldung 
+END_VAR
+VAR_IN_OUT
+	LOGGING_ENTRY : INT; //Hier einen Integer verlinken auf dem die Log Positioon gelesen und dann erhöht wird, muss mit allen anderen FB's mit Log verdunden werden
+	LOGGING_MESSAGE : STRING; //Hier ein beliebig Großese String Array Verlinken und den Logg Entry alls Array Position angeben , muss mit allen anderen FB's mit Log verdunden werden
+END_VAR
+VAR
+	TON_EIN : Tc2_Standard.TON;
+	TON_AUS : Tc2_Standard.TON;
+	F_TRIG_RM_ZU: F_TRIG;
+	R_TRIG_RM_AUF: R_TRIG;
+	BUFFER_STRING : STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+
+IF AUTO_EIN THEN
+	//Rückmeldung 	
+
+	TON_AUS(IN := FALSE);
+	
+	TON_EIN(IN := TRUE, PT := T#5S);	
+	RM := TON_EIN.Q ;
+	
+	//LOG	
+	R_TRIG_RM_AUF(CLK := RM);
+	
+	IF R_TRIG_RM_AUF.Q THEN
+		LOGGING_ENTRY := LOGGING_ENTRY + 1;
+ 		BUFFER_STRING := Tc2_Standard.CONCAT( LOGGING_NAME , ' Rückmeldung Ein   TIME:');
+		LOGGING_MESSAGE := CONCAT(BUFFER_STRING , TIME_STAMP);
+	END_IF
+	
+ELSE
+	//Rückmeldung 	
+
+	TON_EIN(IN := FALSE);
+	
+	TON_AUS(IN := TRUE, PT := T#5S);
+	RM := NOT TON_AUS.Q ;	
+	
+	//LOG	
+	F_TRIG_RM_ZU(CLK := RM);
+	
+	IF F_TRIG_RM_ZU.Q THEN
+		LOGGING_ENTRY := LOGGING_ENTRY + 1;
+		BUFFER_STRING := Tc2_Standard.CONCAT( LOGGING_NAME , ' Rückmeldung Aus   TIME:');
+		LOGGING_MESSAGE := CONCAT(BUFFER_STRING , TIME_STAMP);	END_IF
+
+END_IF
+
+
+
+
+IF LOGGING_ENTRY = MAX_LOGG_ENTRY THEN
+	LOGGING_ENTRY := 1;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="fb_IBN_Pumpe">
+      <LineId Id="266" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="225" Count="12" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="238" Count="15" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="255" Count="6" />
+      <LineId Id="329" Count="1" />
+      <LineId Id="39" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

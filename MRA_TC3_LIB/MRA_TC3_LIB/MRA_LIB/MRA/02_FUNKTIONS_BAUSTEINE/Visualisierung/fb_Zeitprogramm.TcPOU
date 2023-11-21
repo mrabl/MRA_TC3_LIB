@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="fb_Zeitprogramm" Id="{09b66adb-d66f-4187-b9f4-cbd6ba96165e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_Zeitprogramm 
+VAR_INPUT
+	FREIGABE 							: BOOL;
+	START_UHRZEIT						: STRING;     //Format Info: '12:12'
+	START_DATUM							: STRING;	 //Format Info: '01.11'
+	END_UHRZEIT							: STRING;     //Format Info: '12:12'
+	END_DATUM							: STRING;	 //Format Info: '01.11'	
+END_VAR
+VAR_OUTPUT
+	ZEITPROGRAMM_AKTIV					: BOOL;
+END_VAR
+VAR			  
+	AKTUELLE_STUNDE						: WORD;
+	AKTUELLE_MINUTE		 				: WORD;
+	AKUTELLE_SEKLUNDE					: WORD; 	
+	AKTUELLES_JAHR		  				: WORD;   	
+	AKTUELLER_MONAT		 				: WORD;  	
+	AKTUELLER_TAG		   				: WORD;
+	
+	START_MINUTE						: WORD;
+	START_STUNDE						: WORD;
+	START_TAG							: WORD;
+	START_MONAT							: WORD;
+	
+	END_MINUTE							: WORD;
+	END_STUNDE							: WORD;
+	END_TAG								: WORD;
+	END_MONAT							: WORD;
+
+	
+	
+	
+	
+	state								: INT;
+	R_TRIG_FREIGABE						: R_TRIG;
+	AMS_NET_ID 							: STRING;
+	ADS_TIME							: Tc2_Utilities.NT_GetTime;
+	GET_AMS_NET_ID						: Tc2_Utilities.FB_GetLocalAmsNetId;
+	st_ADS_TIME							: Tc2_Utilities.TIMESTRUCT;
+	lese_interval						: TOF;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[lese_interval(	PT	:=	T#1200MS,	IN	:=	NOT	lese_interval.Q	);
+
+GET_AMS_NET_ID(	bExecute:= TRUE , 	AddrString=> AMS_NET_ID); 
+
+ADS_TIME(
+	NETID:= AMS_NET_ID, 
+	START:= lese_interval.Q, 	
+	TIMESTR=> st_ADS_TIME );	
+	
+	AKTUELLE_STUNDE 	 	:= st_ADS_TIME.wHour;
+	AKTUELLE_MINUTE		  	:= st_ADS_TIME.wMinute;
+	AKUTELLE_SEKLUNDE		:= st_ADS_TIME.wSecond;
+	AKTUELLES_JAHR		  	:= st_ADS_TIME.wYear;
+	AKTUELLER_MONAT		 	:= st_ADS_TIME.wMonth;
+	AKTUELLER_TAG     		:= st_ADS_TIME.wDay;
+
+	START_TAG				:= STRING_TO_WORD(Tc2_Standard.LEFT(START_DATUM, 2));
+	START_MONAT				:= STRING_TO_WORD(Tc2_Standard.RIGHT(START_DATUM, 2));
+	
+	START_STUNDE			:= STRING_TO_WORD(Tc2_Standard.LEFT(START_UHRZEIT, 2));
+	START_MINUTE			:= STRING_TO_WORD(Tc2_Standard.RIGHT(START_UHRZEIT, 2));
+	
+	END_TAG					:= STRING_TO_WORD(Tc2_Standard.LEFT(END_DATUM, 2));
+	END_MONAT				:= STRING_TO_WORD(Tc2_Standard.RIGHT(END_DATUM, 2));
+	
+	END_STUNDE				:= STRING_TO_WORD(Tc2_Standard.LEFT(END_UHRZEIT, 2));
+	END_MINUTE				:= STRING_TO_WORD(Tc2_Standard.RIGHT(END_UHRZEIT, 2));
+	
+R_TRIG_FREIGABE(CLK := FREIGABE);
+
+IF R_TRIG_FREIGABE.Q THEN state := 1; END_IF
+
+CASE state OF
+	
+	0: 
+		ZEITPROGRAMM_AKTIV := FALSE;
+		
+	1:
+		IF (START_MONAT <= AKTUELLER_MONAT) AND (END_MONAT >= AKTUELLER_MONAT) THEN
+			state := 2;
+		ELSE
+			state := 6;
+		END_IF
+		
+	2: 	
+		IF (START_TAG <= AKTUELLER_TAG) AND (END_TAG >= AKTUELLER_TAG) THEN
+			state := 3;		
+		ELSE
+			state := 6;
+		END_IF	
+		
+	3:
+		IF (START_STUNDE <= AKTUELLE_STUNDE) AND (END_STUNDE >= AKTUELLE_STUNDE) THEN
+			state := 4;		
+		ELSE
+			state := 6;
+		END_IF
+		
+	4:
+		IF (START_MINUTE = AKTUELLE_MINUTE) AND (START_STUNDE = AKTUELLE_STUNDE)  THEN
+			ZEITPROGRAMM_AKTIV := TRUE;
+		ELSIF (END_MINUTE = AKTUELLE_MINUTE) AND (END_STUNDE = AKTUELLE_STUNDE)  THEN
+			ZEITPROGRAMM_AKTIV := FALSE;		
+		END_IF	
+	6:
+		ZEITPROGRAMM_AKTIV := FALSE;
+		state := 1;
+
+		
+
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="fb_Zeitprogramm">
+      <LineId Id="224" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="243" Count="0" />
+      <LineId Id="295" Count="1" />
+      <LineId Id="298" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="305" Count="3" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="46" Count="1" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="44" Count="1" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="53" Count="2" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="61" Count="1" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="78" Count="3" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="257" Count="1" />
+      <LineId Id="311" Count="1" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="144" Count="2" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="274" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

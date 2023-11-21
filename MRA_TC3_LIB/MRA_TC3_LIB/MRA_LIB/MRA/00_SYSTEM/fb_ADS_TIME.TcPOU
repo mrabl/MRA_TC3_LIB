@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="fb_ADS_TIME" Id="{3ff0a164-2bf5-4831-9e79-3a57250d0459}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_ADS_TIME
+VAR_INPUT
+
+(*	===============================================================	*)
+(*	===						Eingangsvariablen							===		*)
+(*	===============================================================	*)
+
+(*	===		BOOL	===	*)
+
+
+(*	==============================================	*)
+
+(*	===		REAL	===	*)
+
+
+
+(*	==============================================	*)
+
+(*	===		STRING	===	*)
+
+	i_AMS_NET_ID	:	STRING :=	''	;
+
+(*	===		WORD	===	*)
+
+
+(*	==============================================	*)
+
+(*	###################################################################	*)
+
+END_VAR
+
+VAR_OUTPUT
+
+(*	===============================================================	*)
+(*	===						Ausgangsvariablen							===		*)
+(*	===============================================================	*)
+
+(*	===		DATE_AND_TIME	===	*)
+
+	q_SPS_aktuelle_Uhrzeit	:	DATE_AND_TIME	;
+(*	==============================================	*)
+(*	===		STRING	===	*)
+
+
+	Datum				:	STRING			;
+	Uhr					:	STRING			;
+
+
+(*	==============================================	*)
+(*	===		WORD	===	*)
+
+	q_SPS_Stunde		:	WORD	;
+	q_SPS_Minute		:	WORD	;
+	q_SPS_Sekunde		:	WORD	;
+	q_SPS_Jahr			:	WORD	;
+	q_SPS_Monat		:	WORD	;
+	q_SPS_Tag			:	WORD	;
+	q_SPS_Wochentag	:	WORD	;
+
+(*	==============================================	*)
+
+(*	###################################################################	*)
+
+END_VAR
+VAR
+
+(*	===============================================================	*)
+(*	===						interne Variablen								===		*)
+(*	===============================================================	*)
+
+	Win_Ce_Zeit		:	TIMESTRUCT	;
+
+	datum_Merker_001	:	STRING	;
+	datum_Merker_002	:	STRING	;
+	datum_Merker_003	:	STRING	;
+	datum_Merker_004	:	STRING	;
+	datum_Tag			:	STRING	;
+	datum_Monat		:	STRING	;
+	datum_Jahr			:	STRING	;
+	datum_punkt			:	STRING	:=	'.'	;
+
+	Uhr_Merker_001	:	STRING	;
+	Uhr_Merker_002	:	STRING	;
+	Uhr_Merker_003	:	STRING	;
+	Uhr_Merker_004	:	STRING	;
+	Uhr_doppelpunkt	:	STRING		:=	':'	;
+
+	Uhr_Minute	 :	STRING	;
+	Uhr_Stunde		:	STRING	;
+	Uhr_Sekunde :	STRING	;
+
+(*	###################################################################	*)
+
+(*	===============================================================	*)
+(*	===						Zeitvariblen									===		*)
+(*	===============================================================	*)
+
+	Intervall_zeit	:	TIME	:=	t#1200ms	;
+
+(*	###################################################################	*)
+
+(*	===============================================================	*)
+(*	===						interneBausteine								===		*)
+(*	===============================================================	*)
+
+
+	WinCE_Uhrzeit 		: 	NT_GetTime		;
+	lese_interval	: 	TON	;
+(*	###################################################################	*)
+
+(*	###################################################################	*)
+(*	###################################################################	*)
+(*	###################################################################	*)
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*	=================================================	*)
+(*	===						Uhrzeitauslesen		    		 ===	*)
+(*	=================================================	*)
+
+lese_interval(
+	PT	:=			Intervall_zeit,
+	IN	:=	NOT	lese_interval.Q
+	);
+
+(*	=================================================	*)
+
+WinCE_Uhrzeit		(
+(*	----------------------------------------------	*)
+(*	Eingaenge	*)
+	NETID:=i_AMS_NET_ID ,
+	START:=lese_interval.Q ,
+(*	Ausgaenge	*)
+	TIMESTR=>Win_Ce_Zeit
+	 );
+
+(*  ###################################################	*)
+
+(*	=================================================	*)
+(*	===			Zeituebergabe an Panel fuer VISU	    		 ===	*)
+(*	=================================================	*)
+
+q_SPS_Stunde		:=	Win_Ce_Zeit.wHour			;
+q_SPS_Minute		:=	Win_Ce_Zeit.wMinute		;
+q_SPS_Sekunde		:=	Win_Ce_Zeit.wSecond		;
+q_SPS_Jahr			:=	Win_Ce_Zeit.wYear			;
+q_SPS_Monat		:=	Win_Ce_Zeit.wMonth			;
+q_SPS_Tag			:=	Win_Ce_Zeit.wDay			;
+q_SPS_Wochentag	:=	Win_Ce_Zeit.wDayOfWeek	;
+
+
+
+q_SPS_aktuelle_Uhrzeit	:=	SYSTEMTIME_TO_DT
+	(	Win_Ce_Zeit	)	;
+
+(*  ###################################################	*)
+
+datum_Tag 		:=	WORD_TO_STRING	(Win_Ce_Zeit.wDay		)	;
+datum_Monat 	:=	WORD_TO_STRING	(Win_Ce_Zeit.wMonth		)	;
+datum_Jahr 		:=	WORD_TO_STRING	(Win_Ce_Zeit.wYear			)	;
+
+Uhr_Stunde 		:=	WORD_TO_STRING	(Win_Ce_Zeit.wHour		)	;
+Uhr_Minute 		:=	WORD_TO_STRING	(Win_Ce_Zeit.wMinute	)	;
+Uhr_Sekunde 	:=	WORD_TO_STRING	(Win_Ce_Zeit.wSecond	)	;
+
+datum_Merker_001:= CONCAT	(	datum_Tag			,	datum_punkt		)	;
+datum_Merker_002:= CONCAT	(	datum_Merker_001	,	datum_Monat	)	;
+datum_Merker_003:=CONCAT	(	datum_Merker_002	,	datum_punkt		)	;
+datum_Merker_004:=CONCAT	(	datum_Merker_003	,	datum_Jahr		)	;
+
+datum	:=	datum_Merker_004	;
+
+
+Uhr_Merker_001:= CONCAT	(	Uhr_Stunde			,	Uhr_doppelpunkt		)	;
+Uhr_Merker_002:= CONCAT	(	Uhr_Merker_001		,	Uhr_Minute	)	;
+Uhr_Merker_003:=CONCAT	(	Uhr_Merker_002		,	Uhr_doppelpunkt		)	;
+Uhr_Merker_004:=CONCAT	(	Uhr_Merker_003		,	Uhr_Sekunde		)	;
+
+Uhr	:=	Uhr_Merker_004	;
+
+(*  ###################################################	*)
+(*  ###################################################	*)
+(*  ###################################################	*)]]></ST>
+    </Implementation>
+    <LineIds Name="fb_ADS_TIME">
+      <LineId Id="123" Count="65" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

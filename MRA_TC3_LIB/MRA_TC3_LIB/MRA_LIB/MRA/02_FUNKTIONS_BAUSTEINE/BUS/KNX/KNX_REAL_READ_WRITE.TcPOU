@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="KNX_REAL_READ_WRITE" Id="{f335c38b-5224-45ce-8c9c-7922966ed60c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK KNX_REAL_READ_WRITE
+VAR_INPUT
+	
+GRUPPENADRESSE	:	STRING;
+KNX_STRUCTUR	:	EIB_REC;
+REAL_IN			:	REAL;
+END_VAR
+VAR_OUTPUT
+REAL_OUT		:	REAL;	
+INFO			:	STRING;
+ERROR_OUT		:	BOOL;
+END_VAR
+VAR
+KNX_2BYTE_TO_REAL	: EIB_2OCTET_FLOAT_REC;
+STARTUP_READ		: EIB_READ_SEND;
+EIB_ERROR			: INT;
+EIB_ADRESSE			: Tc2_EIB.EIB_GROUP_ADDR;	
+TON_KALTSTART 		: Tc2_Standard.TON;
+R_TRIG_STARTUP_READ	: R_TRIG;
+
+EIB_2OCTET_FLOAT_SEND : EIB_2OCTET_FLOAT_SEND;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+TON_KALTSTART(IN := TRUE, PT := T#10S);
+R_TRIG_STARTUP_READ(CLK := TON_KALTSTART.Q);
+
+EIB_ADRESSE := STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE := GRUPPENADRESSE);
+
+
+STARTUP_READ(Group_Address:= EIB_ADRESSE , 
+	         bRead:=   R_TRIG_STARTUP_READ.Q, 
+	         str_Rec:= KNX_STRUCTUR , 
+	         iErrorID=> EIB_ERROR , 
+	        );
+			
+CASE EIB_ERROR OF	
+	0			: INFO := 	'NO_EIB_ERROR'                       ;
+	1			: INFO := 	'WRONG_EIB_PHYS_ADDR'                ;
+	2			: INFO := 	'WRONG_EIB_GROUP_ADDR'               ;
+	3			: INFO := 	'WRONG_EIB_GROUP_LEN'                ;
+	4			: INFO := 	'WRONG_EIB_NO_FILTER'                ;
+	10			: INFO := 	'WRONG_EIB_FIRMWARE'                 ;
+	11			: INFO := 	'WRONG_EIB_MODE'                     ;
+	12			: INFO := 	'WRONG_MODE'                         ;
+	14			: INFO := 	'WRONG_EIB_FIRMWARE_B1_NECESSARY'    ;
+	15			: INFO := 	'WRONG_EIB_FIRMWARE_B3_NECESSARY'    ;
+	20			: INFO := 	'WRONG_EIB_DATA_LEN'                 ;
+	21			: INFO := 	'ERROR_EIB_SERVICE_NOT_SUPPORT'      ;
+	30			: INFO := 	'KL6301_TP_TOGGLE_ERROR'             ;
+	31			: INFO := 	'TIME_OUT'                           ;
+	32			: INFO := 	'KL6301_NO_RESPONSE_FROM_TERMINAL'   ;
+	40			: INFO := 	'ERROR_SEND_8BIT_WRONG_Scaling_Mode' ;
+	100			: INFO := 	'ERROR_EIB_PHY_ADDR_NOT_SUPPORT'     ;
+	101			: INFO := 	'ERROR_EIB_WRITE_DATA'               ;
+	102			: INFO := 	'MONITOR_MODE_LEN_IS_NOT_OK_MUST_0'  ;
+	103			: INFO := 	'MONITOR_MODE_ADDR_IS_NOT_OK_MUST_0' ;
+	104			: INFO := 	'WATCHDOG_ERROR_NO_SEND'             ;
+	16#0BBB		: INFO := 	'ERROR_EIB_NO_ACK'                   ;
+	16#FAFB		: INFO := 	'ERROR_EIB_NO_COM_TO_TP'             ;
+	16#0FCC		: INFO := 	'ERROR_TP_TEMP_WARNING'              ;
+	16#17CC		: INFO := 	'ERROR_TP_PROTOCOL_ERROR'            ;
+	16#27CC		: INFO := 	'ERROR_TP_TRANSMITTER_ERROR'         ;
+	16#47CC		: INFO := 	'ERROR_TP_RECEIVE_ERROR'             ;
+	16#87CC		: INFO := 	'ERROR_TP_SLAVE_COLLISION'           ;	
+END_CASE
+
+
+
+(*KNX_2BYTE_TO_REAL(Group_Address:= EIB_ADRESSE,
+ 				  strData_Rec:= KNX_STRUCTUR,
+				  rData => REAL_OUT);*)
+
+IF ADR(REAL_OUT) <> ADR(REAL_IN) THEN
+	
+	EIB_2OCTET_FLOAT_SEND(
+				  Group_Address:= EIB_ADRESSE, 
+	              rData:= REAL_IN, 
+	              str_Rec:= KNX_STRUCTUR, 
+	              iErrorID=> EIB_ERROR);
+	REAL_OUT := REAL_IN;
+END_IF
+				  
+
+				  
+			
+IF EIB_ERROR > 0 THEN
+ERROR_OUT := TRUE;
+
+ELSE
+ERROR_OUT := FALSE;	
+
+END_IF				  
+			
+				  
+]]></ST>
+    </Implementation>
+    <LineIds Name="KNX_REAL_READ_WRITE">
+      <LineId Id="291" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="140" Count="35" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="176" Count="1" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="331" Count="1" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="336" Count="3" />
+      <LineId Id="335" Count="0" />
+      <LineId Id="333" Count="1" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="208" Count="1" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="210" Count="1" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="181" Count="2" />
+      <LineId Id="50" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

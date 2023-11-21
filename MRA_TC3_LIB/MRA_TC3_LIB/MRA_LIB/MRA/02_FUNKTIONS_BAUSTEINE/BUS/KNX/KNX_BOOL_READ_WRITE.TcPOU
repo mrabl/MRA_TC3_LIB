@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="KNX_BOOL_READ_WRITE" Id="{c397c731-bb47-45ad-ad39-986f383b37ef}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK KNX_BOOL_READ_WRITE
+VAR_INPUT
+	BOOL_IN : BOOL;
+	GRUPPEN_ADRESSE_IN : STRING;
+	GRUPPEN_ADRESSE_OUT : STRING;
+	EIB_DATA_st : Tc2_EIB.EIB_REC;
+END_VAR
+
+VAR_OUTPUT
+ 	BOOL_OUT : BOOL;
+END_VAR
+VAR
+EIB_BIT_SEND : EIB_BIT_SEND;
+EIB_BIT_REC : EIB_BIT_REC;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[EIB_BIT_SEND(
+	Group_Address:= STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE:= GRUPPEN_ADRESSE_IN ), 
+	bData:= BOOL_IN, 
+	str_Rec:= EIB_DATA_st, 
+	bError=> , 
+	iErrorID=> );
+	
+EIB_BIT_REC(
+	Group_Address:= STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE:= GRUPPEN_ADRESSE_OUT ),
+ 	strData_Rec:= EIB_DATA_st,
+ 	bDataReceive=>  ,
+ 	bData=> BOOL_OUT);]]></ST>
+    </Implementation>
+    <LineIds Name="KNX_BOOL_READ_WRITE">
+      <LineId Id="375" Count="10" />
+      <LineId Id="50" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

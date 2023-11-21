@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="fb_IBN_Ventil_ohne_Log" Id="{cbfde30d-efdb-448c-98af-bfca885d64cd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_IBN_Ventil_ohne_Log
+VAR_INPUT
+	AUTO_AUF : BOOL;
+	VERFAHRZEIT : TIME;
+END_VAR
+VAR_OUTPUT
+	RM_AUF : BOOL;
+	RM_ZU  : BOOL;
+END_VAR
+VAR
+	TON_AUF : Tc2_Standard.TON;
+	TON_ZU 	: Tc2_Standard.TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	
+IF AUTO_AUF THEN
+	//Rückmeldung 	
+	RM_ZU := FALSE;	
+	TON_ZU(IN := FALSE);
+	
+	TON_AUF(IN := NOT RM_ZU, PT := VERFAHRZEIT);	
+	RM_AUF := TON_AUF.Q ;	
+ELSE
+	//Rückmeldung 	
+	RM_AUF := FALSE;	
+	TON_AUF(IN := FALSE);
+	
+	TON_ZU(IN := NOT RM_AUF, PT := VERFAHRZEIT);
+	RM_ZU := TON_ZU.Q ;	
+
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="fb_IBN_Ventil_ohne_Log">
+      <LineId Id="96" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

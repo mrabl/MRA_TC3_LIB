@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="f_MQTTPUB" Id="{60ac643d-7601-4c31-8331-24ab4e3f3f40}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_MQTTPUB : BOOL
+VAR_INPUT
+	
+		MqttClient: FB_IotMqttClient;		
+		sTopic : STRING;
+		sValue : STRING;
+
+END_VAR
+VAR
+	sPayloadPub: STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[        MqttClient.Publish(    sTopic:= sTopic, 
+			                   pPayload:= ADR(sValue), nPayloadSize:= LEN2(ADR(sValue))+1, 
+                               eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+]]></ST>
+    </Implementation>
+    <LineIds Name="f_MQTTPUB">
+      <LineId Id="13" Count="2" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

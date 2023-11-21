@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.4">
+  <POU Name="fb_DEVICE_RESET" Id="{649c5698-e50a-4740-af35-3f9625aba47c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_DEVICE_RESET //Dieser FB setzt, anhand des Status des jeweiligen Gerätes (Device ID), jeweils beim erstmaligen überschreiben von Device Status > 0 und nach ablaufen des "DELAY_BETWEEN_RESETS" eine online Reset (Gleich wie über das Kontext Menü bei Rechtsklick auf ein Gerät)
+VAR_INPUT
+	CX_Status :UINT;
+	DEVICEID : UINT;							
+	DELAY_BETWEEN_RESETS : TIME := T#10M;	//Zeitintervall zwischen den Rests sollt der status noch 0 werden
+	QUIT : BOOL;							//Quttiertaster
+	AUTO_RESET_ACTIV : BOOL;				//Freigabe des Autorestieren nach jedem Zeit intervall		
+END_VAR
+VAR_OUTPUT
+	Stoerung_CX : BOOL;						//Wird true bei CX Status größer 0 nach 10 Sekunden
+	LOCAL_AMS_NET_ID : STRING;				//AMS Net ID des CX
+END_VAR
+VAR
+	FB_GETLOCALAMSNETID: FB_GetLocalAmsNetId;
+	fb_IOF_DeviceReset : IOF_DeviceReset;
+
+	
+	TON_KALTSTART: TON;
+	TON_CX_Status: TON;
+	
+	RESET_KBUS: BOOL;
+	
+	fb_BLINKER : fb_BLINKER;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+TON_KALTSTART(IN := TRUE, PT := T#2S);
+
+FB_GETLOCALAMSNETID(
+	bExecute:= TON_Kaltstart.Q, 
+	tTimeOut:= T#500MS);
+
+TON_CX_Status(IN:= CX_Status > 0 , PT:=T#1M , Q=> Stoerung_CX);
+	
+ fb_BLINKER(
+	bEnable:= Stoerung_CX AND RESET_KBUS,
+	tImpZeit:= T#5S,
+	tPauZeit:= DELAY_BETWEEN_RESETS,
+	bStartTyp:= 1,
+	tOut => RESET_KBUS	);
+	
+fb_IOF_DeviceReset(
+	NETID:= FB_GETLOCALAMSNETID.AddrString, 
+	DEVICEID:= DEVICEID, 
+	RESET:= RESET_KBUS OR  QUIT, 
+	TMOUT:= T#500MS);]]></ST>
+    </Implementation>
+    <LineIds Name="fb_DEVICE_RESET">
+      <LineId Id="100" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="61" Count="2" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="17" Count="5" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="24" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

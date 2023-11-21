@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="fb_MQTTSUB" Id="{61620019-43a4-4164-9f43-e2ec99bef6e7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_MQTTSUB
+VAR_INPUT	
+	MqttClient : FB_IotMqttClient;
+	sTopic : STRING;
+END_VAR
+VAR_IN_OUT	
+	MessageQueue : FB_IotMqttMessageQueue;
+END_VAR
+VAR_OUTPUT
+	sValue : STRING;
+END_VAR
+VAR
+	Message : FB_IotMqttMessage;
+END_VAR
+
+
+
+
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MqttClient.Subscribe(sTopic:=sTopic, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+
+IF MessageQueue.nQueuedMessages > 0 THEN
+  
+	 IF MessageQueue.Dequeue(fbMessage:=Message) THEN	
+		
+        IF Message.CompareTopic(sTopic:=sTopic) THEN
+            Message.GetPayload(pPayload:=ADR(sValue), nPayloadSize:=SIZEOF(sValue), bSetNullTermination:=FALSE);
+	 	END_IF	
+		
+	END_IF
+END_IF			   
+]]></ST>
+    </Implementation>
+    <LineIds Name="fb_MQTTSUB">
+      <LineId Id="10" Count="0" />
+      <LineId Id="12" Count="10" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

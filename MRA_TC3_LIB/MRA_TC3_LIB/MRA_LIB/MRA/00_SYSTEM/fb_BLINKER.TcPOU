@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="fb_BLINKER" Id="{0ccdeb10-5cf3-4bd5-ad48-221556c3e6ce}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_BLINKER
+VAR_INPUT
+		///BLINKER///
+	bEnable: BOOL;									(*Enable*)
+	tImpZeit: TIME;									(*Impulszeit*)
+	tPauZeit: TIME;									(*Pausezeit*)
+	bStartTyp: BOOL;								(*Start 0=Impuls, 1=Pause*)
+
+	
+
+
+END_VAR
+VAR_OUTPUT
+	
+	bFreigabe: BOOL;								(*Freigabe Ausgang*)
+	tOut: BOOL;											(*Timer Ausgang*)
+
+END_VAR
+VAR
+	
+	flStart: R_TRIG;								(*Start - Flanke*)
+	tImpTakt: TON;									(*Impuls Timer*)
+	tPauTakt: TON;		
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+(*Enable*)
+IF bEnable = TRUE THEN
+
+	(*Start mit Impuls/Pause*)
+	flStart(CLK := bEnable);
+	IF flStart.Q = TRUE THEN
+		tOut := NOT bStartTyp;
+	END_IF
+
+	(*NULL-Zeiten abfragen*)
+	IF (tImpZeit > T#0s) AND (tPauZeit > T#0s) THEN
+
+		(*Impuls Takt*)
+		tImpTakt(IN := tOut, PT := tImpZeit);
+		IF tImpTakt.Q = TRUE THEN
+			tOut := FALSE;
+		END_IF
+
+		(*Pause Takt*)
+		tPauTakt(IN := NOT tOut, PT := tPauZeit);
+		IF tPauTakt.Q = TRUE THEN
+			tOut := TRUE;
+		END_IF
+
+		(*Ausgang*)
+		bFreigabe := tOut;
+
+	ELSE
+
+		(*Ausgang*)
+		bFreigabe := FALSE;
+
+	END_IF
+
+ELSE
+
+	(*Timer resetieren*)
+	tImpTakt.IN := FALSE;
+	tImpTakt.PT := T#0s;
+	tPauTakt.IN := FALSE;
+	tPauTakt.PT := T#0s;
+
+	(*Ausgang*)
+	bFreigabe := FALSE;
+
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="fb_BLINKER">
+      <LineId Id="10" Count="46" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

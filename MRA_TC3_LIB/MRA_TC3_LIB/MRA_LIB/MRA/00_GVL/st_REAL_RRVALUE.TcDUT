@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <DUT Name="st_REAL_RRVALUE" Id="{59d62eb9-0b58-4a9d-9f77-f932a0549d65}">
+    <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
+TYPE st_REAL_RRVALUE :
+STRUCT
+	
+
+	r_in_Value : REAL;
+	r_out_Value: REAL;
+	
+	s_Comment : STRING(1000);
+	
+	i_Unit : INT;
+	//Resolution
+	i_Resolution_in_max : INT;
+	i_Resolution_in_min : INT;
+	i_Resolution_out_max : INT;
+	i_Resolution_out_min : INT;	
+	//Grenzwert
+	r_MaxValue : REAL;
+	r_MinValue : REAL;
+	b_MaxValue_Reached : BOOL;
+	b_MinValue_Reached : BOOL;	
+	t_MinMax_Delay : REAL;
+	b_Enable_MinMax : BOOL;
+	//KNX
+	b_KNX_Enable : BOOL;
+	s_KNX_Addres : STRING;
+	b_KNX_Write_Mode : BOOL;
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

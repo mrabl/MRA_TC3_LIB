@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="fb_REAL_RRVALUE" Id="{cef8b59e-25e8-43da-8cd7-58bbc87269b7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_REAL_RRVALUE
+VAR_INPUT
+EIB_DATA_st : Tc2_EIB.EIB_REC;
+END_VAR
+VAR_IN_OUT
+st_REAL_RRVALUE : st_REAL_RRVALUE;	
+END_VAR
+VAR
+	TON_KALTSTART : Tc2_Standard.TON;
+	
+
+	//Skallierung
+	i_r_in		:REAL;
+	i_r_x_min	:REAL;
+	i_r_x_max	:REAL;
+	i_r_y_min	:REAL;
+	i_r_y_max	:REAL;
+	
+	//Grenzwert
+	TON_MAX_VALUE : Tc2_Standard.TON;
+	TON_MIN_VALUE : Tc2_Standard.TON;
+	
+	//KNX
+	EIB_2OCTET_FLOAT_SEND : TC2_EIB.EIB_2OCTET_FLOAT_SEND;
+	EIB_2OCTET_FLOAT_REC : Tc2_EIB.EIB_2OCTET_FLOAT_REC;	
+	EIB_READ_SEND: EIB_READ_SEND;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[TON_KALTSTART(IN := TRUE, PT:= T#10s);
+
+a_scal();
+a_minmax();
+a_knx();
+
+
+]]></ST>
+    </Implementation>
+    <Action Name="a_knx" Id="{3c1b44c2-2055-4afd-928c-ade6fce28d7c}">
+      <Implementation>
+        <ST><![CDATA[IF st_REAL_RRVALUE.b_KNX_Enable THEN	
+		
+			
+		EIB_READ_SEND(
+			Group_Address:= STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE:= st_REAL_RRVALUE.s_KNX_Addres  ) , 
+			bRead:= TON_KALTSTART.Q, 
+			str_Rec:= EIB_DATA_st); 
+		
+		
+
+
+		IF st_REAL_RRVALUE.b_KNX_Write_Mode THEN
+			
+			EIB_2OCTET_FLOAT_SEND(
+				Group_Address:= STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE:= st_REAL_RRVALUE.s_KNX_Addres  ) , 
+				rData:= st_REAL_RRVALUE.r_in_Value, 
+				str_Rec:= EIB_DATA_st);
+		
+		ELSE
+		
+			EIB_2OCTET_FLOAT_REC(
+				Group_Address:= STRING_TO_EIB_GRP_ADDR(GRUPPENADRESSE:= st_REAL_RRVALUE.s_KNX_Addres ) , 
+				strData_Rec:= EIB_DATA_st, 
+				rData=> st_REAL_RRVALUE.r_in_Value);		
+		
+		END_IF
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="a_minmax" Id="{99a766ab-6538-4cdd-9e42-ce4d0a7493ae}">
+      <Implementation>
+        <ST><![CDATA[//Grenzwert
+IF st_REAL_RRVALUE.b_Enable_MinMax THEN
+	
+	//Grenzwert Oben
+	TON_MAX_VALUE(IN:= st_REAL_RRVALUE.r_out_Value >= st_REAL_RRVALUE.r_MaxValue, PT := TO_TIME(st_REAL_RRVALUE.t_MinMax_Delay * 1000));
+	
+	IF TON_MAX_VALUE.Q THEN
+		st_REAL_RRVALUE.b_MaxValue_Reached := TRUE;
+	ELSE
+		st_REAL_RRVALUE.b_MaxValue_Reached := FALSE;
+	END_IF
+	
+	
+	//Grenzwert Unten	
+	TON_MIN_VALUE(IN:= st_REAL_RRVALUE.r_out_Value <= st_REAL_RRVALUE.r_MinValue, PT := TO_TIME(st_REAL_RRVALUE.t_MinMax_Delay * 1000));
+	
+	IF TON_MIN_VALUE.Q THEN
+		st_REAL_RRVALUE.b_MinValue_Reached := TRUE;
+	ELSE
+		st_REAL_RRVALUE.b_MinValue_Reached := FALSE;
+	END_IF
+	
+	
+	
+ELSE
+	
+	st_REAL_RRVALUE.b_MinValue_Reached := FALSE;
+	st_REAL_RRVALUE.b_MaxValue_Reached := FALSE;
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="a_scal" Id="{55cf8191-7a3b-4553-b358-da7615727782}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="fb_REAL_RRVALUE">
+      <LineId Id="110" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+    <LineIds Name="fb_REAL_RRVALUE.a_knx">
+      <LineId Id="1" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="55" Count="3" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="30" Count="3" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="42" Count="3" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="3" Count="0" />
+    </LineIds>
+    <LineIds Name="fb_REAL_RRVALUE.a_minmax">
+      <LineId Id="2" Count="21" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="24" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="fb_REAL_RRVALUE.a_scal">
+      <LineId Id="22" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

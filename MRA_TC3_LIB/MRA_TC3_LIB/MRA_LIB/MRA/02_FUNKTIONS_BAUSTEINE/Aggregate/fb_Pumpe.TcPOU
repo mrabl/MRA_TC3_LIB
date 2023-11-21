@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="fb_Pumpe" Id="{7c0f94ea-1703-419c-bfcb-93fb09c057a4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_Pumpe
+(*Pumpe*)
+
+VAR_INPUT
+	DDC	:BOOL;	(* 	DDC Betrieb	*)
+	FRG	:BOOL;	(* 	Freigabe	*)
+	P_HA	:BOOL;	(* 	Panel H/A	*)
+	AUTO	:BOOL;	(* 	Auto Betrieb	*)
+	QUITT	:BOOL;	(* 	Störquittierung	*)
+	RM		:BOOL;	(* 	RM Betrieb	*)
+	T_RM	:TIME;	(* 	Rückmeldefehler Zeit	*)
+	STOE	:BOOL;	(* 	Störung Motorschutz	*)
+	REP	:BOOL;	(* 	Rep.-Schalter	*)	
+	FROST	:BOOL;	(* 	Frostschutz	*)
+	BLOCK	:BOOL;	(* 	Blockierschutz	*)
+	T_BLOCK	:TIME;	(* 	Aktivierungszeit Blockierschutz	*)
+	U_IO	:BOOL;	(* 	Spannungsüberwachung	*)
+	KONFIG	:BYTE;	(*	
+						2#00010000 Auswertung Teilautomatik
+						2#00001000 Auswertung Störung
+						2#00000100 Bei Rückmeldefehler Antrieb = Auto
+						2#00000010 Bei Rückmeldefehler Antrieb = Ein
+						2#00000001 Quittierung Rückmeldefehler
+						*)
+	Reset_BSZ:BOOL;	(* 	Rücksetzen BSZ	*)
+	Nachlaufzeit		:TIME := T#5S; (* 	Nachlaufzeit der Pumpe	*)
+END_VAR
+
+VAR_IN_OUT
+	V_SB	:BYTE;		(* 	VISU SB*)
+	V_ST	:BYTE;		(* 	VISU Stufen*)
+	BSZ:REAL;			(* 	Betriebsstundenzähler*)
+
+END_VAR
+
+VAR_OUTPUT
+	NOTB	:BOOL;	(* 	LVB	*)
+	TA_P	:BOOL;	(* 	Teilautomatik Panel	*)
+	TA_V	:BOOL;	(* 	Teilautomatik VISU	*)
+	TA_G	:BOOL;	(* 	Teilautomatik GLT	*)
+	S_TA	:BOOL;	(* 	Teilautomatik	*)
+	EIN	:BOOL;	(* 	Betrieb	*)
+	STOE_RM	:BOOL;	(* 	Störung Rückmeldung	*)
+	STOE_MS	:BOOL;	(* 	Störung Motorschutz	*)
+	STOE_FROST	:BOOL;	(* 	Störung Frostschutz	*)
+	BLOCK_EIN	:BOOL;	(* 	Blockierschutz aktiv	*)
+	WART	:BOOL;	(* 	Reparaturschalter	*)
+	SA	:BOOL;	(* 	Störung	*)
+	Betrieb:BOOL;	(* 	Betriebsmeldung	*)
+	Sperre:BOOL;(* 	Sperre Antrieb (Keine Freigabe)	*)
+END_VAR
+VAR
+	RMF	:TON;
+	QuittRMF	:BOOL;
+	Maske	:BYTE;
+	NOTBx	:BOOL;														
+	TA_Px	:BOOL;														
+	TA_Vx	:BOOL;														
+	TA_Gx	:BOOL;
+	S_TAx	:BOOL;														
+	STOE_RMx	:BOOL;														
+	STOE_MSx	:BOOL;
+	SAx	:BOOL;
+	Wartx	:BOOL;														
+	Stoe_Laufx	:BOOL;
+	Stoe_Frostx	:BOOL;
+	TON_BLOCK	:TON;
+	TP_BLOCK	:TP;
+	U_IO_Verz	:TON;
+	U_IO_X	:BOOL;
+	BSZ_Pumpe: FB_ALB_BSZ;
+	TOF_AUSVZ	:TOF;
+
+	Wartung:REAL;
+	Intervall_WA:REAL:=0;
+	P_EIN	:BOOL;	(* 	Panel Ein*)
+	V_SB_UA_M	:BYTE;														
+	V_ST_UA_M	:BYTE;
+	V_STELL_UA_M	:REAL;
+	V_SB_M	:BYTE;														
+	V_ST_M	:BYTE;
+	V_STELL_M	:REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*Auswertung UA / konventionell*)
+
+
+IF V_SB <> V_SB_M THEN
+    V_SB_UA_M := V_SB;
+    V_SB_M := V_SB;
+END_IF;
+
+
+
+
+IF V_ST <> V_ST_M THEN
+    V_ST_UA_M := V_ST;
+    V_ST_M := V_ST;
+END_IF;
+
+
+(*Auswertung VISU/GLT*)
+CASE BYTE_TO_INT (V_SB) OF
+	1:	TA_Vx	:= TRUE;
+		TA_Gx	:= FALSE;
+	2:	TA_Vx	:= FALSE;
+		TA_Gx	:= TRUE;
+	ELSE
+		TA_Vx	:= FALSE;
+		TA_Gx	:= FALSE;
+END_CASE;
+
+(*Initalisierung Stossfreie Umschaltung*)
+IF NOT (TA_Gx OR TA_Vx)  THEN
+	IF EIN THEN
+		V_ST  := 1;
+
+	ELSE
+		V_ST := 0;
+
+	END_IF;
+END_IF;
+IF NOT TA_Px  THEN
+	P_EIN  := EIN;
+END_IF;
+
+(*Auswertung Panel*)
+TA_Px := P_HA;
+
+(*Auswertung Notbetrieb*)
+Notbx := NOT DDC;
+
+(*Auswertung Teilautomatik*)
+Maske := Konfig AND 2#00010000;
+IF Maske = 16 THEN
+	S_TAx := TA_Vx OR TA_Gx OR TA_Px;
+	ELSE S_TAx := TA_Vx OR TA_Gx OR TA_Px OR Notbx;
+END_IF;
+
+(*Auswertung Rückmeldefehler*)
+RMF(IN:=(((Ein XOR Rm) AND DDC) OR Stoe_Rmx) AND NOT QuittRMF, PT:=T_RM);
+Stoe_Rmx := RMF.Q;
+
+(*Auswertung Motorschutz*)
+Stoe_Msx := (NOT Stoe OR Stoe_Msx) AND NOT (Stoe AND Quitt);
+
+(*Auswertung Frostschutz*)
+Stoe_Frostx := (NOT Frost OR Stoe_Frostx) AND NOT (Frost AND Quitt);
+
+(*Auswertung Störung*)
+Maske := Konfig AND 2#00001000;
+IF Maske = 8 THEN
+	SAx := Stoe_Msx OR Stoe_Rmx OR Stoe_Laufx OR Wartx;
+	ELSE	SAx := Stoe_Msx OR Stoe_Rmx OR Stoe_Laufx;
+END_IF;
+
+(*Auswertung Rep.-Schalter*)
+IF Maske = 8 THEN
+	Wartx := NOT REP OR Wartx AND NOT Quitt;
+	ELSE Wartx := NOT REP;
+END_IF;
+
+(*Quittierung Rückmeldefehler*)
+QuittRMF := FALSE;
+Maske := Konfig AND 2#00000001;
+IF Maske = 1 THEN
+	IF (Ein = Rm) AND Stoe_Rmx AND Quitt THEN
+		QuittRMF := TRUE;
+	END_IF;
+	ELSE IF Stoe_Rmx AND Quitt THEN
+		QuittRMF := TRUE;
+	END_IF;
+END_IF;
+
+(*Nachlaufzeit Pumpe *)
+
+TOF_AUSVZ(IN:=Auto , PT:=Nachlaufzeit, Q=> , ET=> );
+
+(*Ansteuerung Antrieb*)
+IF FRG AND DDC AND NOT Stoe_Msx AND NOT Wartx THEN
+	Ein := TOF_AUSVZ.Q;
+	IF TA_Gx OR TA_Vx THEN
+		Maske := 2#00000001;
+		Ein := BYTE_TO_BOOL (Maske AND V_ST);
+	END_IF;
+	IF TA_Px THEN
+		Ein := P_Ein;
+	END_IF;
+	Ein := Ein OR TP_BLOCK.Q;	(*Blockierschutz*)
+	IF Stoe_Rmx THEN	(*Bei Rückmeldefehler Antrieb = Ein || Antrieb = Aus || Antrieb = Auto*)
+		Maske := Konfig AND 2#00000110;
+		IF Maske = 4 THEN
+			Ein := Ein;
+			ELSE IF Maske = 2 THEN
+				Ein := TRUE;
+				ELSE Ein := FALSE;
+			END_IF;
+		END_IF;
+	END_IF;
+
+	IF STOE_Frost THEN	(*Übersteuerung Frostschutz*)
+		Ein := TRUE;
+	END_IF;
+
+	(*Blockierschutz*)
+	TON_BLOCK (IN:= BLOCK AND NOT EIN, PT:=T_BLOCK);
+	TP_BLOCK (IN:= TON_BLOCK.Q, PT:= T#5m);
+	IF TP_BLOCK.Q THEN
+		Ein := TRUE;
+	END_IF;
+
+	BLOCK_EIN := TP_BLOCK.Q;
+
+	ELSE Ein := FALSE;
+END_IF;
+
+(*Meldeunterdrückung*)
+U_IO_Verz(IN:=U_IO, PT:=T#5s);
+U_IO_X := U_IO_Verz.Q;
+IF U_IO_X THEN
+	NOTB	:=	NOTBx	;
+	TA_P	:=	TA_Px	;
+	TA_V	:=	TA_Vx	;
+	TA_G	:=	TA_Gx	;
+	S_TA	:=	S_TAx	;
+	STOE_RM	:=	STOE_RMx	;
+	STOE_MS	:=	STOE_MSx	;
+	SA	:=	SAx	;
+	Wart	:=	Wartx	;
+	STOE_FROST	:= Stoe_Frostx;
+END_IF;
+
+Betrieb:=RM;
+Sperre:=NOT FRG;
+
+
+
+(****************Betriebsstundenzaehler*)
+
+BSZ_Pumpe(
+	RM:= RM,
+	Reset:=VISU.Reset_BSZ OR Reset_BSZ,
+	INTERVALL:=Intervall_WA ,
+	WERT:= BSZ,
+	WARTUNG:= Wartung);
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="fb_Pumpe">
+      <LineId Id="94" Count="0" />
+      <LineId Id="99" Count="4" />
+      <LineId Id="105" Count="1" />
+      <LineId Id="110" Count="5" />
+      <LineId Id="117" Count="147" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
