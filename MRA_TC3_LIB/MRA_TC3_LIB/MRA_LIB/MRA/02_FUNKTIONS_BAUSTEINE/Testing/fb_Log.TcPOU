@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="fb_Log" Id="{b77eae46-0603-4fc5-8e7f-105df770d0bc}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK fb_Log
 VAR_INPUT
@@ -21,6 +21,9 @@ END_VAR
       <ST><![CDATA[	IF INPUT_STRING <> INPUT_STRING_BUFFER THEN
 	 	INPUT_STRING_BUFFER :=	INPUT_STRING;
 		LOGG_ENTRY := LOGG_ENTRY + 1;
+		IF LOGG_ENTRY > 999 THEN
+			LOGG_ENTRY := 0;
+		END_IF
 		BUFFER_STRING := CONCAT('      TIME STAMP:  ', SYSTEM_TIME );
 		LOGGING_ARRAY[LOGG_ENTRY] := CONCAT(INPUT_STRING, BUFFER_STRING );		
 	END_IF
@@ -32,6 +35,7 @@ END_VAR
     </Implementation>
     <LineIds Name="fb_Log">
       <LineId Id="10" Count="2" />
+      <LineId Id="48" Count="2" />
       <LineId Id="32" Count="0" />
       <LineId Id="13" Count="0" />
       <LineId Id="15" Count="4" />

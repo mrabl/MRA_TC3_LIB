@@ -6,7 +6,7 @@ VAR_INPUT
 	
 		MqttClient: FB_IotMqttClient;		
 		sTopic : STRING;
-		sValue : STRING;
+		sValue : STRING(3000);
 
 END_VAR
 VAR
@@ -15,7 +15,7 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[        MqttClient.Publish(    sTopic:= sTopic, 
-			                   pPayload:= ADR(sValue), nPayloadSize:= LEN2(ADR(sValue))+1, 
+			                   pPayload:= ADR(sValue), nPayloadSize:= LEN2(ADR(sValue)), 
                                eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
 ]]></ST>
     </Implementation>

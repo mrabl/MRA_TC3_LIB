@@ -18,7 +18,7 @@
     <Company>MRA Solutions</Company>
     <Released>false</Released>
     <Title>MRA_LIB</Title>
-    <ProjectVersion>1.0.1</ProjectVersion>
+    <ProjectVersion>1.0.5</ProjectVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MRA\00_DUT\Klappe_ST.TcDUT">
@@ -163,6 +163,7 @@
     </PlaceholderReference>
     <PlaceholderReference Include="Tc3_JsonXml">
       <DefaultResolution>Tc3_JsonXml, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_JsonXml</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc3_ModbusDevices">
       <DefaultResolution>Tc3_ModbusDevices, * (Beckhoff Automation GmbH)</DefaultResolution>
