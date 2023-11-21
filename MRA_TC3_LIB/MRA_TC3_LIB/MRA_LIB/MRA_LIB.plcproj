@@ -42,6 +42,9 @@
     <Compile Include="MRA\01_FUNKTIONEN\MATH\f_Scale.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MRA\01_FUNKTIONEN\MQTT\fb_MQTTSUB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MRA\01_FUNKTIONEN\MQTT\f_MQTTPUB.TcPOU">
       <SubType>Code</SubType>
     </Compile>
