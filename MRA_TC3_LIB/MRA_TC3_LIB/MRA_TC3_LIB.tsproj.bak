@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.50">
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.54">
 	<Project ProjectGUID="{16FF0CF0-54A1-4968-99F8-297980CA9792}" Target64Bit="true" ShowHideConfigurations="#x6">
 		<System>
 			<Tasks>
@@ -10,7 +10,7 @@
 		</System>
 		<Plc>
 			<Project GUID="{AAF9E5A1-E0D8-4EF2-BBEA-1DB9125E7045}" Name="MRA_LIB" PrjFilePath="MRA_LIB\MRA_LIB.plcproj" TmcFilePath="MRA_LIB\MRA_LIB.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="MRA_LIB\MRA_LIB.tmc" TmcHash="{7B8DA188-DC7C-5F89-EE55-9885EC3F6509}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="MRA_LIB\MRA_LIB.tmc" TmcHash="{2795247B-F6DB-6E97-2489-7D296D01D44D}">
 					<Name>MRA_LIB Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">

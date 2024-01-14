@@ -165,10 +165,6 @@
       <DefaultResolution>Tc3_JsonXml, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc3_JsonXml</Namespace>
     </PlaceholderReference>
-    <PlaceholderReference Include="Tc3_ModbusDevices">
-      <DefaultResolution>Tc3_ModbusDevices, * (Beckhoff Automation GmbH)</DefaultResolution>
-      <Namespace>Tc3_ModbusDevices</Namespace>
-    </PlaceholderReference>
     <PlaceholderReference Include="Tc3_Module">
       <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc3_Module</Namespace>
